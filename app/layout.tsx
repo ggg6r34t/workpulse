@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+
 import "./globals.css";
+import Footer from "@/components/layout/Footer";
+import Navbar from "@/components/layout/Navbar";
+import QueryClientProvider from "@/QueryClientProvider";
+import { ThemeProvider } from "@/components/ui/theme-provider";
+import { TimeTrackerProvider } from "./contexts/TimeTrackerContext";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,7 +35,20 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <QueryClientProvider>
+          <ThemeProvider>
+            <TooltipProvider>
+              <Toaster />
+              <TimeTrackerProvider>
+                <Navbar />
+                <main className="w-full min-h-screen p-6 mx-auto">
+                  {children}
+                </main>
+                <Footer />
+              </TimeTrackerProvider>
+            </TooltipProvider>
+          </ThemeProvider>
+        </QueryClientProvider>
       </body>
     </html>
   );

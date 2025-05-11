@@ -179,7 +179,13 @@ export function DataSettings({ settings, updateSettings }: DataSettingsProps) {
                 <Select
                   value={settings.backupFrequency || "daily"}
                   onValueChange={(value) =>
-                    updateSettings({ backupFrequency: value })
+                    updateSettings({
+                      backupFrequency: value as
+                        | "daily"
+                        | "hourly"
+                        | "weekly"
+                        | "never",
+                    })
                   }
                 >
                   <SelectTrigger id="backup-frequency">

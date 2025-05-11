@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -8,13 +10,16 @@ import {
   formatDuration,
 } from "@/lib/time";
 import { TimeEntry } from "@/types/types";
-import { Trash2, ChevronDown, ChevronUp, FileText } from "lucide-react";
+import { Trash2, ChevronDown, ChevronUp, FileText, Tag } from "lucide-react";
+import { Badge } from "../ui/badge";
+import { useTimeTracker } from "@/app/contexts/TimeTrackerContext";
 
 interface Props {
   entry: TimeEntry;
   isExpanded: boolean;
   onToggleExpand: (entryId: string) => void;
   onDelete: (entryId: string) => void;
+  onTagClick?: (tag: string) => void;
 }
 
 const TimeEntryRow = ({
@@ -22,7 +27,10 @@ const TimeEntryRow = ({
   isExpanded,
   onToggleExpand,
   onDelete,
+  onTagClick,
 }: Props) => {
+  const { settings } = useTimeTracker();
+
   return (
     <TableRow
       className={`
@@ -57,7 +65,7 @@ const TimeEntryRow = ({
         )}
       </TableCell>
       <TableCell className="font-medium">
-        {formatDate(entry.startTime)}
+        {formatDate(entry.startTime, { dateFormat: settings.dateFormat })}
       </TableCell>
       <TableCell className="text-muted-foreground">{entry.client}</TableCell>
       <TableCell>
@@ -69,8 +77,20 @@ const TimeEntryRow = ({
         </div>
       </TableCell>
       <TableCell className="whitespace-nowrap text-muted-foreground">
-        {formatTime(entry.startTime)}
-        {entry.endTime && <span> - {formatTime(entry.endTime)}</span>}
+        {formatTime(entry.startTime, {
+          hour12: settings.hour12,
+          showSeconds: settings.showSeconds,
+        })}
+        {entry.endTime && (
+          <span>
+            {" "}
+            -{" "}
+            {formatTime(entry.endTime, {
+              hour12: settings.hour12,
+              showSeconds: settings.showSeconds,
+            })}
+          </span>
+        )}
       </TableCell>
       <TableCell>
         {entry.endTime ? (
@@ -87,9 +107,33 @@ const TimeEntryRow = ({
           </span>
         )}
       </TableCell>
+      <TableCell>
+        <div className="flex flex-wrap gap-1">
+          {entry.tags && entry.tags.length > 0 ? (
+            entry.tags.map((tag) => (
+              <Badge
+                key={tag}
+                className="px-1.5 py-0 text-xs whitespace-nowrap cursor-pointer hover:bg-primary/20 transition-colors"
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onTagClick) onTagClick(tag);
+                }}
+              >
+                <Tag className="h-3 w-3 mr-1" />
+                {tag}
+              </Badge>
+            ))
+          ) : (
+            <span className="text-xs text-muted-foreground">No tags</span>
+          )}
+        </div>
+      </TableCell>
       <TableCell className="font-medium">
         {entry.endTime ? (
-          formatDuration(calculateDuration(entry))
+          formatDuration(calculateDuration(entry), {
+            showSeconds: settings.showSeconds,
+          })
         ) : entry.isActive && !entry.isPaused ? (
           <span className="text-green-600">Running...</span>
         ) : (

@@ -1,20 +1,26 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Clock, User, Clipboard } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Clock, User, Clipboard, Tag } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useTimeTracker } from "@/app/contexts/TimeTrackerContext";
+import { Badge } from "../ui/badge";
 
 const TimeEntryForm = () => {
-  const { activeEntry, startTimer, updateEntry } = useTimeTracker();
+  const { activeEntry, startTimer, updateEntry, settings } = useTimeTracker();
   const [client, setClient] = useState("");
   const [task, setTask] = useState("");
   const [description, setDescription] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
   const [recentClients, setRecentClients] = useState<string[]>([]);
   const [recentTasks, setRecentTasks] = useState<string[]>([]);
+  const tagInputRef = useRef<HTMLInputElement>(null);
+
+  const defaultClient = settings?.defaultClient || "";
+  const defaultTask = settings?.defaultTask || "";
 
   // Load recent values
   useEffect(() => {
@@ -27,7 +33,13 @@ const TimeEntryForm = () => {
     } catch (error) {
       console.error("Error loading recent values:", error);
     }
-  }, []);
+
+    // Default values when there's no active entry
+    if (!activeEntry) {
+      setClient(defaultClient);
+      setTask(defaultTask);
+    }
+  }, [activeEntry, defaultClient, defaultTask]);
 
   // Update form values when active entry changes
   useEffect(() => {
@@ -35,23 +47,25 @@ const TimeEntryForm = () => {
       setClient(activeEntry.client);
       setTask(activeEntry.task);
       setDescription(activeEntry.description || "");
+      setTags(activeEntry.tags || []);
     } else {
       // Reset form if no active entry
-      setClient("");
-      setTask("");
+      setClient(defaultClient);
+      setTask(defaultTask);
       setDescription("");
+      setTags([]);
     }
-  }, [activeEntry]);
+  }, [activeEntry, defaultClient, defaultTask]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (activeEntry) {
       // Update the current entry
-      updateEntry(activeEntry.id, { client, task, description });
+      updateEntry(activeEntry.id, { client, task, description, tags });
     } else {
       // Start a new timer
-      startTimer(client, task, description);
+      startTimer(client, task, description, tags);
 
       // Save to recent values
       if (client.trim()) {
@@ -77,7 +91,49 @@ const TimeEntryForm = () => {
           JSON.stringify(updatedTasks)
         );
       }
+
+      // Update recently used tags in localStorage
+      if (tags.length > 0) {
+        try {
+          const storedRecentTags = localStorage.getItem(
+            "workpulse-recent-tags"
+          );
+          const recentTags: string[] = storedRecentTags
+            ? JSON.parse(storedRecentTags)
+            : [];
+
+          // Add all current tags to recently used
+          const updatedRecentTags = [
+            ...tags,
+            ...recentTags.filter((tag) => !tags.includes(tag)),
+          ].slice(0, 5);
+
+          localStorage.setItem(
+            "workpulse-recent-tags",
+            JSON.stringify(updatedRecentTags)
+          );
+        } catch (error) {
+          console.error("Error updating recent tags:", error);
+        }
+      }
     }
+  };
+
+  const handleTagInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      const input = e.currentTarget;
+      const value = input.value.trim();
+
+      if (value && !tags.includes(value)) {
+        setTags([...tags, value]);
+        input.value = "";
+      }
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setTags(tags.filter((tag) => tag !== tagToRemove));
   };
 
   return (
@@ -134,6 +190,43 @@ const TimeEntryForm = () => {
             </datalist>
           </div>
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <label
+          htmlFor="tags"
+          className="text-sm font-medium flex items-center gap-2 text-foreground/80"
+        >
+          <Tag className="h-4 w-4 text-primary" />
+          Tags
+        </label>
+        <div className="flex flex-wrap gap-2 mb-2">
+          {tags.map((tag, index) => (
+            <Badge
+              key={index}
+              className="bg-primary/10 text-primary px-2 py-1 rounded-md text-sm flex items-center gap-1 group"
+            >
+              {tag}
+              <button
+                type="button"
+                onClick={() => removeTag(tag)}
+                className="text-primary/50 hover:text-primary/90 group-hover:scale-110 transition-all"
+              >
+                &times;
+              </button>
+            </Badge>
+          ))}
+        </div>
+        <Input
+          id="tags"
+          placeholder="Add tags (press Enter or comma to add)"
+          className="w-full rounded-lg border-muted bg-card/50 focus-visible:ring-primary"
+          onKeyDown={handleTagInput}
+          ref={tagInputRef}
+        />
+        <p className="text-xs text-muted-foreground mt-1">
+          Add multiple tags to organize your work better
+        </p>
       </div>
 
       <div className="space-y-2">

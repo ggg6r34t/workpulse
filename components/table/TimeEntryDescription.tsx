@@ -1,13 +1,15 @@
 import React from "react";
 
 import { TableCell, TableRow } from "@/components/ui/table";
+import { Tag } from "lucide-react";
 
 interface Props {
   description: string;
   tags?: string[];
+  onTagClick?: (tag: string) => void;
 }
 
-const TimeEntryDescription = ({ description, tags }: Props) => {
+const TimeEntryDescription = ({ description, tags, onTagClick }: Props) => {
   return (
     <TableRow className="bg-muted/10 animate-accordion-down">
       <TableCell colSpan={8} className="py-3">
@@ -23,8 +25,10 @@ const TimeEntryDescription = ({ description, tags }: Props) => {
                 <span
                   key={index}
                   className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary"
+                  onClick={() => onTagClick && onTagClick(tag)}
                 >
-                  #{tag}
+                  <Tag className="h-3 w-3 mr-1" />
+                  {tag}
                 </span>
               ))}
             </div>

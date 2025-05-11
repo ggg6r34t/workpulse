@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Settings } from "@/types/types";
+import { DEFAULT_SETTINGS, Settings } from "@/types/types";
 import { Switch } from "@/components/ui/switch";
 import { useEffect } from "react";
 import { useTheme } from "next-themes";
@@ -60,9 +60,9 @@ export function DisplaySettings({ settings, updateSettings }: Props) {
             <div className="space-y-2">
               <Label htmlFor="time-format">Time Format</Label>
               <Select
-                value={settings.timeFormat || "12h"}
+                value={settings.hour12 ? "12h" : "24h"}
                 onValueChange={(value: "12h" | "24h") =>
-                  updateSettings({ timeFormat: value })
+                  updateSettings({ hour12: value === "12h" })
                 }
               >
                 <SelectTrigger id="time-format">
@@ -78,8 +78,10 @@ export function DisplaySettings({ settings, updateSettings }: Props) {
             <div className="space-y-2">
               <Label htmlFor="date-format">Date Format</Label>
               <Select
-                value={settings.dateFormat || "MM/DD/YYYY"}
-                onValueChange={(value) => updateSettings({ dateFormat: value })}
+                value={settings.dateFormat || DEFAULT_SETTINGS.dateFormat}
+                onValueChange={(
+                  value: "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD"
+                ) => updateSettings({ dateFormat: value })}
               >
                 <SelectTrigger id="date-format">
                   <SelectValue placeholder="Select date format" />

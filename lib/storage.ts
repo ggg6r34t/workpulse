@@ -24,6 +24,12 @@ export const loadTimeEntries = (): TimeEntry[] => {
       pauseStartTime: entry.pauseStartTime
         ? new Date(entry.pauseStartTime)
         : undefined,
+      autoPauseEnabled:
+        parsedEntries.autoPauseEnabled ?? DEFAULT_SETTINGS.autoPauseEnabled,
+      autoPauseMinutes:
+        parsedEntries.autoPauseMinutes ?? DEFAULT_SETTINGS.autoPauseMinutes,
+      dailyReminders:
+        parsedEntries.dailyReminders ?? DEFAULT_SETTINGS.dailyReminders,
     }));
   } catch (error) {
     console.error("Error loading time entries from localStorage:", error);

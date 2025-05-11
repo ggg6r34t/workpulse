@@ -1,74 +1,71 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "./ui/label";
+import PomodoroTimer from "./pomodoro/PomodoroTimer";
 import TimerControls from "@/components/TimerControls";
 import TimeEntryForm from "@/components/form/TimeEntryForm";
-import { useActiveEntry } from "@/app/hooks/useActiveEntry";
+import { TimerIcon } from "lucide-react";
+import { Switch } from "./ui/switch";
 import { useTimeTracker } from "@/app/contexts/TimeTrackerContext";
 
 const TimerCard = () => {
-  const { activeEntry } = useActiveEntry();
-  const { timeEntries } = useTimeTracker();
+  const { activeEntry } = useTimeTracker();
+  const [showPomodoro, setShowPomodoro] = useState<boolean>(false);
+  const [showForm, setShowForm] = useState<boolean>(false);
 
-  // Calculate today's total time
-  const calculateTodayTotal = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    return timeEntries
-      .filter((entry) => {
-        const entryDate = new Date(entry.startTime);
-        entryDate.setHours(0, 0, 0, 0);
-        return entryDate.getTime() === today.getTime() && entry.endTime;
-      })
-      .reduce((total, entry) => {
-        const duration = entry.endTime
-          ? entry.endTime.getTime() -
-            entry.startTime.getTime() -
-            (entry.pausedTime || 0)
-          : 0;
-        return total + duration;
-      }, 0);
+  // Show form if there's no active timer
+  const handleMouseEnter = () => {
+    if (!activeEntry) {
+      setShowForm(true);
+    }
   };
-
-  const formatTotalTime = (ms: number) => {
-    const hours = Math.floor(ms / 3600000);
-    const minutes = Math.floor((ms % 3600000) / 60000);
-    return `${hours}h ${minutes}m`;
-  };
-
-  const todayTotal = calculateTodayTotal();
 
   return (
-    <>
-      <Card
-        className={`p-6 shadow-lg rounded-2xl transition-all duration-300 ${
-          activeEntry && !activeEntry.isPaused
-            ? "border-primary/50 shadow-primary/10 bg-primary/5"
-            : activeEntry && activeEntry.isPaused
-            ? "border-yellow-400/50 shadow-yellow-100/20 bg-yellow-50/30"
-            : "border-muted/50 hover:border-muted/80 hover:shadow-md"
-        }`}
-      >
-        <CardContent className="p-0">
-          <TimerControls />
-          <div className="mt-12">
-            <TimeEntryForm />
-          </div>
-        </CardContent>
-      </Card>
-
-      {todayTotal > 0 && (
-        <div className="bg-primary/5 rounded-lg p-4 flex justify-between items-center">
+    <Card
+      className={`bg-card p-6 border-muted/50 shadow-lg rounded-2xl transition-all duration-300 }`}
+      id="timer-card"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={() => setShowForm(false)}
+    >
+      <CardContent className="p-0">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-2">
-            <span className="text-primary font-medium">{`Today's total:`}</span>
-            <span className="font-bold">{formatTotalTime(todayTotal)}</span>
+            <TimerIcon className="h-5 w-5 text-muted-foreground" />
+            <h2 className="text-lg font-medium">Time Tracking</h2>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="pomodoro-mode"
+              checked={showPomodoro}
+              onCheckedChange={setShowPomodoro}
+            />
+            <Label htmlFor="pomodoro-mode" className="text-sm">
+              Pomodoro Mode
+            </Label>
           </div>
         </div>
-      )}
-    </>
+
+        {showPomodoro ? (
+          <PomodoroTimer />
+        ) : (
+          <>
+            <TimerControls />
+            <div
+              className={`mt-8 pt-6 border-t border-border/40 transition-all duration-300 ${
+                showForm
+                  ? "opacity-100 max-h-[800px]"
+                  : "opacity-0 max-h-0 overflow-hidden"
+              }`}
+            >
+              <TimeEntryForm />
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

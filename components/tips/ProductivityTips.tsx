@@ -2,72 +2,39 @@
 
 import React, { useState } from "react";
 import { ChevronDown, ChevronUp, Lightbulb } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { DEFAULT_TIPS } from "@/app/contents/productivityTips";
+import { ProductivityTip } from "@/types/types";
 
-interface Tip {
-  id: string;
-  content: string;
-  category?: string;
-}
-
-interface TipsCardProps {
-  tips?: Tip[];
+interface Props {
+  tips?: ProductivityTip[];
   title?: string;
   defaultOpen?: boolean;
   variant?: "default" | "compact";
   className?: string;
 }
 
-const DEFAULT_TIPS: Tip[] = [
-  {
-    id: "1",
-    content:
-      "Use the Pomodoro technique: 25 minutes of focused work, followed by a 5-minute break.",
-    category: "Technique",
-  },
-  {
-    id: "2",
-    content: "Set clear goals for each time entry to stay focused on the task.",
-    category: "Planning",
-  },
-  {
-    id: "3",
-    content:
-      "Add detailed descriptions to your time entries for better reporting.",
-    category: "Documentation",
-  },
-  {
-    id: "4",
-    content: "Use tags to categorize and filter your work sessions.",
-    category: "Organization",
-  },
-  {
-    id: "5",
-    content: "Remember to pause the timer when you're taking breaks.",
-    category: "Habit",
-  },
-];
-
-export const TipsCard = ({
+export const ProductivityTips = ({
   tips = DEFAULT_TIPS,
   title = "Productivity Tips",
   defaultOpen = false,
   variant = "default",
   className = "",
-}: TipsCardProps) => {
+}: Props) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
     <Collapsible
       open={isOpen}
       onOpenChange={setIsOpen}
-      className={`rounded-xl border bg-gradient-to-br from-card/80 to-card/60 shadow-sm backdrop-blur-sm transition-all hover:shadow-md ${className}`}
+      className={`${className}`}
     >
       <CollapsibleTrigger asChild>
         <Button

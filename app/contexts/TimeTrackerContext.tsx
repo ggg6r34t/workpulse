@@ -6,6 +6,7 @@ import React, {
   useState,
   useEffect,
   ReactNode,
+  useCallback,
 } from "react";
 
 import {
@@ -41,6 +42,7 @@ const TimeTrackerContext = createContext<TimeTrackerContextProps | undefined>(
 export const TimeTrackerProvider = ({ children }: { children: ReactNode }) => {
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [activeEntry, setActiveEntry] = useState<ActiveTimeEntry | null>(null);
+  const [lastActivity, setLastActivity] = useState<number>(Date.now());
   const [elapsedTime, setElapsedTime] = useState<number>(0);
   const [notificationsEnabled, setNotificationsEnabled] =
     useState<boolean>(false);
@@ -65,6 +67,47 @@ export const TimeTrackerProvider = ({ children }: { children: ReactNode }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Daily reminders functionality
+  useEffect(() => {
+    if (!settings.dailyReminders) return;
+
+    const checkDailyReminder = () => {
+      const now = new Date();
+      const reminderTime = new Date();
+      reminderTime.setHours(20, 0, 0, 0); // 8 PM reminder
+
+      if (now > reminderTime && !localStorage.getItem("dailyReminderShown")) {
+        if (notificationsEnabled) {
+          new Notification("Daily Time Summary", {
+            body: "Don't forget to log your time entries for today!",
+          });
+        } else {
+          toast({
+            title: "Daily Reminder",
+            description: "Don't forget to log your time entries for today!",
+            variant: "info",
+          });
+        }
+        localStorage.setItem("dailyReminderShown", "true");
+      }
+    };
+
+    // Check every minute
+    const interval = setInterval(checkDailyReminder, 60000);
+
+    // Reset at midnight
+    const midnight = new Date();
+    midnight.setHours(24, 0, 0, 0);
+    const timeout = setTimeout(() => {
+      localStorage.removeItem("dailyReminderShown");
+    }, midnight.getTime() - Date.now());
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [settings.dailyReminders, notificationsEnabled]);
 
   // Save entries to localStorage when they change
   useEffect(() => {
@@ -127,7 +170,7 @@ export const TimeTrackerProvider = ({ children }: { children: ReactNode }) => {
     showTimerNotification("stopped", stoppedEntry);
   };
 
-  const pauseTimer = () => {
+  const pauseTimer = useCallback(() => {
     if (!activeEntry || activeEntry.isPaused) return;
 
     const pausedEntry = pauseEntry(activeEntry);
@@ -138,7 +181,36 @@ export const TimeTrackerProvider = ({ children }: { children: ReactNode }) => {
       )
     );
     showTimerNotification("paused", pausedEntry);
-  };
+    setLastActivity(Date.now()); // Reset activity timer on manual pause
+  }, [activeEntry]);
+
+  // Auto-pause functionality
+  useEffect(() => {
+    if (!activeEntry || !settings.autoPauseEnabled) return;
+
+    const checkInactivity = () => {
+      const inactiveTime = Date.now() - lastActivity;
+      const threshold = settings.autoPauseMinutes! * 60 * 1000; // Convert minutes to ms
+
+      if (inactiveTime >= threshold && !activeEntry.isPaused) {
+        pauseTimer();
+        toast({
+          title: "Auto-paused",
+          description: `Timer paused after ${settings.autoPauseMinutes} minutes of inactivity`,
+          variant: "warning",
+        });
+      }
+    };
+
+    const interval = setInterval(checkInactivity, 1000); // Check every second
+    return () => clearInterval(interval);
+  }, [
+    activeEntry,
+    settings.autoPauseEnabled,
+    settings.autoPauseMinutes,
+    pauseTimer,
+    lastActivity,
+  ]);
 
   const resumeTimer = () => {
     if (!activeEntry || !activeEntry.isPaused || !activeEntry.pauseStartTime)
@@ -187,9 +259,16 @@ export const TimeTrackerProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const requestNotificationPermission = async () => {
-    const granted = await requestPermission();
-    setNotificationsEnabled(granted);
-    return granted;
+    if (!("Notification" in window)) return false;
+
+    try {
+      const granted = await requestPermission();
+      setNotificationsEnabled(granted);
+      return granted;
+    } catch (err) {
+      console.error("Notification permission request failed:", err);
+      return false;
+    }
   };
 
   const clearAllEntries = () => {

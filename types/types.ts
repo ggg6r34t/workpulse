@@ -19,16 +19,20 @@ export const DEFAULT_SETTINGS: Settings = {
   defaultTask: "",
 
   // Display settings
-  timeFormat: "12h",
+  hour12: true,
   dateFormat: "MM/DD/YYYY",
   showSeconds: true,
   compactView: false,
   showDescriptions: true,
   animations: true,
   theme: "system",
+  weekStart: "sunday",
 
   // Notification settings
   notificationsEnabled: false,
+  autoPauseEnabled: false,
+  autoPauseMinutes: 25,
+  dailyReminders: true,
   idleReminders: true,
   timerAlerts: true,
   dailySummary: false,
@@ -40,6 +44,12 @@ export const DEFAULT_SETTINGS: Settings = {
   autoArchive: false,
   archivePeriod: "3months",
 };
+
+export interface ProductivityTip {
+  id: string;
+  content: string;
+  category?: string;
+}
 
 export interface Settings {
   // Timer settings
@@ -53,16 +63,20 @@ export interface Settings {
   defaultTask?: string;
 
   // Display settings
-  timeFormat: "12h" | "24h";
-  dateFormat: string;
+  hour12: boolean;
+  dateFormat: "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD";
   showSeconds: boolean;
   compactView: boolean;
   showDescriptions?: boolean;
   animations?: boolean;
   theme?: "light" | "dark" | "system";
+  weekStart: "monday" | "sunday" | "saturday";
 
   // Notification settings
   notificationsEnabled?: boolean;
+  autoPauseEnabled?: boolean;
+  autoPauseMinutes?: number;
+  dailyReminders?: boolean;
   idleReminders?: boolean;
   timerAlerts?: boolean;
   dailySummary?: boolean;
@@ -70,7 +84,7 @@ export interface Settings {
 
   // Data settings
   autoSave?: boolean;
-  backupFrequency?: string;
+  backupFrequency?: "hourly" | "daily" | "weekly" | "never";
   autoArchive?: boolean;
   archivePeriod?: string;
 }

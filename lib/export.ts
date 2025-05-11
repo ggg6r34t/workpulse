@@ -4,7 +4,7 @@ import {
   calculateDuration,
   formatDuration,
 } from "./time";
-import { TimeEntry } from "@/types/types";
+import { DEFAULT_SETTINGS, TimeEntry } from "@/types/types";
 
 // Helper function to convert time entries to CSV format
 export function exportToCSV(timeEntries: TimeEntry[]): void {
@@ -35,8 +35,8 @@ export function exportToCSV(timeEntries: TimeEntry[]): void {
       entry.client,
       entry.task,
       entry.description || "",
-      formatTime(startTime),
-      entry.endTime ? formatTime(endTime) : "In progress",
+      formatTime(startTime, DEFAULT_SETTINGS),
+      entry.endTime ? formatTime(endTime, DEFAULT_SETTINGS) : "In progress",
       formatDuration(duration),
       entry.tags ? entry.tags.join(", ") : "",
     ];

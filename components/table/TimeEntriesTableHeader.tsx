@@ -1,5 +1,5 @@
 import React from "react";
-import { Calendar, Clock } from "lucide-react";
+import { Calendar, Clock, Tag } from "lucide-react";
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const TimeEntriesTableHeader = () => {
@@ -20,6 +20,12 @@ const TimeEntriesTableHeader = () => {
           </div>
         </TableHead>
         <TableHead className="font-medium">Status</TableHead>
+        <TableHead>
+          <div className="flex items-center gap-1">
+            <Tag className="h-4 w-4" />
+            <span>Tags</span>
+          </div>
+        </TableHead>
         <TableHead className="font-medium">Duration</TableHead>
         <TableHead className="text-right">Actions</TableHead>
       </TableRow>

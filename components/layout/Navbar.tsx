@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 
 import { Calendar } from "lucide-react";
 import NotificationButton from "../NotificationButton";
@@ -13,14 +14,14 @@ const Navbar = () => {
           <div className="bg-primary/10 p-2 rounded-full">
             <Calendar className="h-5 w-5 text-primary" />
           </div>
-          <div className="flex flex-col">
+          <Link href="/" className="flex flex-col">
             <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               WorkPulse
             </span>
             <span className="text-xs text-muted-foreground hidden sm:inline-block">
               Time tracking simplified
             </span>
-          </div>
+          </Link>
         </div>
 
         <div className="flex items-center space-x-4">

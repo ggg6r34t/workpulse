@@ -17,17 +17,7 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("timer");
   const [isLoading, setIsLoading] = useState(true);
-  const [localSettings, setLocalSettings] = useState(
-    settings || {
-      idleTimeout: 30,
-      roundTimeEntries: false,
-      autoStopAt: null,
-      timeFormat: "12h",
-      dateFormat: "MM/DD/YYYY",
-      showSeconds: true,
-      compactView: false,
-    }
-  );
+  const [localSettings, setLocalSettings] = useState(settings);
 
   useEffect(() => {
     if (settings) {

@@ -4,7 +4,10 @@ import React from "react";
 import { CheckCircle2, AlertCircle, Loader2, X, Info } from "lucide-react";
 import toast from "react-hot-toast";
 
-type ToastActionElement = React.ReactElement;
+type ToastActionElement = React.ReactElement<{
+  label?: string;
+  onClick?: () => void;
+}>;
 
 interface ToastProps {
   id?: string;
@@ -13,6 +16,7 @@ interface ToastProps {
   action?: ToastActionElement;
   duration?: number;
   variant?: "default" | "success" | "error" | "warning" | "loading" | "info";
+  icon?: React.ReactNode;
 }
 
 const showToast = ({
@@ -22,6 +26,7 @@ const showToast = ({
   action,
   duration = 3000,
   variant = "default",
+  icon,
 }: ToastProps) => {
   if (id) toast.dismiss(id);
 
@@ -54,6 +59,9 @@ const showToast = ({
         },
       }[variant];
 
+      // Use the custom icon if provided, otherwise fallback to the variant's icon
+      const toastIcon = icon || variantConfig.icon;
+
       return (
         <div
           className={`group relative flex w-full max-w-sm items-start gap-3 rounded-xl bg-card ${
@@ -62,7 +70,7 @@ const showToast = ({
             t.visible ? "animate-in fade-in-90" : "animate-out fade-out-90"
           }`}
         >
-          <div className="mt-0.5 flex-shrink-0">{variantConfig.icon}</div>
+          <div className="mt-0.5 flex-shrink-0">{toastIcon}</div>
 
           <div className="flex-1">
             {title && (

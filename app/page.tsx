@@ -9,6 +9,7 @@ import QuickSettings from "@/components/QuickSettings";
 import QuickTags from "@/components/QuickTags";
 import TimeEntriesTable from "@/components/TimeEntriesTable";
 import TimerCard from "@/components/TimerCard";
+import WaterReminder from "@/components/WaterReminder";
 import ZapierIntegration from "@/components/ZapierIntegration";
 
 export default function Home() {
@@ -82,7 +83,16 @@ export default function Home() {
             >
               <ProductivityTips variant="compact" defaultOpen={true} />
             </BentoGridItem>
+
+            {/* WaterReminder - Full size */}
+            <BentoGridItem
+              size="full"
+              className="bg-gradient-to-br from-blue-50 to-white-50 dark:from-blue-950/40 dark:to-gray-950/40 border border-blue-100 dark:border-blue-900/50"
+            >
+              <WaterReminder />
+            </BentoGridItem>
           </BentoGrid>
+
           <TimeEntriesTable />
         </div>
       </div>

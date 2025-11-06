@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { Settings } from "@/types/types";
+import { Settings, TimeEntry } from "@/types/types";
 import { toast } from "@/app/hooks/useToast";
 import { useTimeTracker } from "@/app/contexts/TimeTrackerContext";
 
@@ -93,39 +93,98 @@ export function DataSettings({ settings, updateSettings }: DataSettingsProps) {
     const fileInput = document.createElement("input");
     fileInput.type = "file";
     fileInput.accept = ".json";
+    fileInput.setAttribute("aria-label", "Import time entries data");
 
     fileInput.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
 
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: "Import failed",
+          description: "File size exceeds 10MB limit",
+          variant: "error",
+        });
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (event) => {
         try {
-          const data = JSON.parse(event.target?.result as string);
-          if (data.timeEntries) {
-            setTimeEntries(
-              data.timeEntries.map(
-                (entry: { startTime: string; endTime?: string | null }) => ({
-                  ...entry,
-                  startTime: new Date(entry.startTime),
-                  endTime: entry.endTime ? new Date(entry.endTime) : null,
-                })
-              )
-            );
+          const rawData = event.target?.result as string;
+          if (!rawData || typeof rawData !== "string") {
+            throw new Error("Invalid file content");
           }
-          updateSettings(data.settings);
+
+          const data = JSON.parse(rawData);
+          
+          // Validate data structure
+          if (!data || typeof data !== "object") {
+            throw new Error("Invalid data format");
+          }
+
+          // Validate and import time entries
+          if (data.timeEntries && Array.isArray(data.timeEntries)) {
+            const validatedEntries = data.timeEntries
+              .map((entry: { startTime: string; endTime?: string | null }) => {
+                try {
+                  // Validate date strings
+                  const startTime = new Date(entry.startTime);
+                  const endTime = entry.endTime ? new Date(entry.endTime) : null;
+                  
+                  if (isNaN(startTime.getTime())) {
+                    throw new Error("Invalid start time");
+                  }
+                  if (endTime && isNaN(endTime.getTime())) {
+                    throw new Error("Invalid end time");
+                  }
+
+                  return {
+                    ...entry,
+                    startTime,
+                    endTime,
+                  };
+                } catch (error) {
+                  console.warn("Invalid entry skipped:", error, entry);
+                  return null;
+                }
+              })
+              .filter((entry: TimeEntry | null): entry is TimeEntry => entry !== null);
+
+            setTimeEntries(validatedEntries);
+          }
+
+          // Validate and import settings
+          if (data.settings && typeof data.settings === "object") {
+            try {
+              updateSettings(data.settings);
+            } catch (error) {
+              console.warn("Invalid settings, using defaults:", error);
+            }
+          }
+
           toast({
             title: "Import successful",
-            description: `${data.timeEntries.length} entries imported`,
+            description: `${data.timeEntries?.length || 0} entries imported`,
             variant: "success",
           });
-        } catch {
+        } catch (error) {
+          console.error("Import error:", error);
           toast({
             title: "Import failed",
-            description: "Invalid data format",
+            description: error instanceof Error ? error.message : "Invalid data format",
             variant: "error",
           });
         }
+      };
+
+      reader.onerror = () => {
+        toast({
+          title: "Import failed",
+          description: "Error reading file",
+          variant: "error",
+        });
       };
 
       reader.readAsText(file);

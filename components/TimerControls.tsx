@@ -85,8 +85,9 @@ const TimerControls = () => {
               onClick={() => startTimer(defaultClient, defaultTask)}
               size="lg"
               className={getButtonHoverClass(
-                "bg-primary hover:bg-primary/90 flex items-center px-12 py-7 rounded-full shadow-lg shadow-primary/20"
+                "bg-primary hover:bg-primary/90 flex items-center px-12 py-7 rounded-full shadow-lg shadow-primary/20 min-h-[44px]"
               )}
+              aria-label="Start timer"
             >
               <Play className="mr-2 h-6 w-6" />
               Start Timer
@@ -106,8 +107,9 @@ const TimerControls = () => {
                 variant="outline"
                 size="lg"
                 className={getButtonHoverClass(
-                  "flex items-center px-10 py-6 rounded-full bg-green-50 border-green-200 text-green-600 hover:bg-green-100 hover:text-green-700 shadow-sm"
+                  "flex items-center px-10 py-6 rounded-full bg-green-50 border-green-200 text-green-600 hover:bg-green-100 hover:text-green-700 shadow-sm min-h-[44px]"
                 )}
+                aria-label="Resume timer"
               >
                 <Play className="mr-2 h-6 w-6" />
                 Resume
@@ -118,8 +120,9 @@ const TimerControls = () => {
                 variant="outline"
                 size="lg"
                 className={getButtonHoverClass(
-                  "flex items-center px-10 py-6 rounded-full bg-yellow-50 border-yellow-200 text-yellow-600 hover:bg-yellow-100 hover:text-yellow-700 shadow-sm"
+                  "flex items-center px-10 py-6 rounded-full bg-yellow-50 border-yellow-200 text-yellow-600 hover:bg-yellow-100 hover:text-yellow-700 shadow-sm min-h-[44px]"
                 )}
+                aria-label="Pause timer"
               >
                 <Pause className="mr-2 h-6 w-6" />
                 Pause
@@ -131,8 +134,9 @@ const TimerControls = () => {
               variant="outline"
               size="lg"
               className={getButtonHoverClass(
-                "flex items-center px-10 py-6 rounded-full bg-red-50 border-red-200 text-red-600 hover:bg-red-100 hover:text-red-700 shadow-sm"
+                "flex items-center px-10 py-6 rounded-full bg-red-50 border-red-200 text-red-600 hover:bg-red-100 hover:text-red-700 shadow-sm min-h-[44px]"
               )}
+              aria-label="Stop timer"
             >
               <StopCircle className="mr-2 h-6 w-6" />
               Stop

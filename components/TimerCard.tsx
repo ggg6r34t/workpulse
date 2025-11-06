@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "./ui/label";
@@ -14,11 +14,21 @@ import { useTimeTracker } from "@/app/contexts/TimeTrackerContext";
 const TimerCard = () => {
   const { activeEntry } = useTimeTracker();
   const [showPomodoro, setShowPomodoro] = useState<boolean>(false);
-  const [showForm, setShowForm] = useState<boolean>(false);
+  const [showForm, setShowForm] = useState<boolean>(!activeEntry);
 
-  // Show form if there's no active timer
-  const handleMouseEnter = () => {
+  // Show form if there's no active timer (always visible, not just on hover)
+  // On mobile, form is always visible when no timer is active
+  useEffect(() => {
     if (!activeEntry) {
+      setShowForm(true);
+    } else {
+      setShowForm(false);
+    }
+  }, [activeEntry]);
+
+  // Optional: Show form on hover for desktop users (enhancement)
+  const handleMouseEnter = () => {
+    if (!activeEntry && !showForm) {
       setShowForm(true);
     }
   };
@@ -28,7 +38,6 @@ const TimerCard = () => {
       className={`bg-card p-6 border-muted/50 shadow-lg rounded-2xl transition-all duration-300 }`}
       id="timer-card"
       onMouseEnter={handleMouseEnter}
-      onMouseLeave={() => setShowForm(false)}
     >
       <CardContent className="p-0">
         <div className="flex items-center justify-between mb-6">
@@ -41,6 +50,7 @@ const TimerCard = () => {
               id="pomodoro-mode"
               checked={showPomodoro}
               onCheckedChange={setShowPomodoro}
+              aria-label="Toggle Pomodoro Mode"
             />
             <Label htmlFor="pomodoro-mode" className="text-sm">
               Pomodoro Mode
@@ -53,15 +63,17 @@ const TimerCard = () => {
         ) : (
           <>
             <TimerControls />
-            <div
-              className={`mt-8 pt-6 border-t border-border/40 transition-all duration-300 ${
-                showForm
-                  ? "opacity-100 max-h-[800px]"
-                  : "opacity-0 max-h-0 overflow-hidden"
-              }`}
-            >
-              <TimeEntryForm />
-            </div>
+            {!activeEntry && (
+              <div
+                className={`mt-8 pt-6 border-t border-border/40 transition-all duration-300 ${
+                  showForm
+                    ? "opacity-100 max-h-[800px]"
+                    : "opacity-0 max-h-0 overflow-hidden"
+                }`}
+              >
+                <TimeEntryForm />
+              </div>
+            )}
           </>
         )}
       </CardContent>

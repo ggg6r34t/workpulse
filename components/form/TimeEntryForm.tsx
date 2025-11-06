@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useTimeTracker } from "@/app/contexts/TimeTrackerContext";
 import { Badge } from "../ui/badge";
+import { sanitizeString, sanitizeTag } from "@/lib/validation";
 
 const TimeEntryForm = () => {
   const { activeEntry, startTimer, updateEntry, settings } = useTimeTracker();
@@ -60,40 +61,64 @@ const TimeEntryForm = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Sanitize and validate inputs
+    const sanitizedClient = sanitizeString(client.trim(), 200);
+    const sanitizedTask = sanitizeString(task.trim(), 200);
+    const sanitizedDescription = description ? sanitizeString(description.trim(), 1000) : undefined;
+    const sanitizedTags = tags.map(tag => sanitizeTag(tag)).filter(Boolean);
+
+    // Validate required fields
+    if (!sanitizedClient || !sanitizedTask) {
+      return;
+    }
+
     if (activeEntry) {
       // Update the current entry
-      updateEntry(activeEntry.id, { client, task, description, tags });
+      updateEntry(activeEntry.id, {
+        client: sanitizedClient,
+        task: sanitizedTask,
+        description: sanitizedDescription,
+        tags: sanitizedTags,
+      });
     } else {
       // Start a new timer
-      startTimer(client, task, description, tags);
+      startTimer(sanitizedClient, sanitizedTask, sanitizedDescription, sanitizedTags);
 
       // Save to recent values
-      if (client.trim()) {
+      if (sanitizedClient) {
         const updatedClients = [
-          client,
-          ...recentClients.filter((c) => c !== client),
+          sanitizedClient,
+          ...recentClients.filter((c) => c !== sanitizedClient),
         ].slice(0, 5);
         setRecentClients(updatedClients);
-        localStorage.setItem(
-          "workpulse-recent-clients",
-          JSON.stringify(updatedClients)
-        );
+        try {
+          localStorage.setItem(
+            "workpulse-recent-clients",
+            JSON.stringify(updatedClients)
+          );
+        } catch (error) {
+          console.error("Error saving recent clients:", error);
+        }
       }
 
-      if (task.trim()) {
+      if (sanitizedTask) {
         const updatedTasks = [
-          task,
-          ...recentTasks.filter((t) => t !== task),
+          sanitizedTask,
+          ...recentTasks.filter((t) => t !== sanitizedTask),
         ].slice(0, 5);
         setRecentTasks(updatedTasks);
-        localStorage.setItem(
-          "workpulse-recent-tasks",
-          JSON.stringify(updatedTasks)
-        );
+        try {
+          localStorage.setItem(
+            "workpulse-recent-tasks",
+            JSON.stringify(updatedTasks)
+          );
+        } catch (error) {
+          console.error("Error saving recent tasks:", error);
+        }
       }
 
       // Update recently used tags in localStorage
-      if (tags.length > 0) {
+      if (sanitizedTags.length > 0) {
         try {
           const storedRecentTags = localStorage.getItem(
             "workpulse-recent-tags"
@@ -104,8 +129,8 @@ const TimeEntryForm = () => {
 
           // Add all current tags to recently used
           const updatedRecentTags = [
-            ...tags,
-            ...recentTags.filter((tag) => !tags.includes(tag)),
+            ...sanitizedTags,
+            ...recentTags.filter((tag) => !sanitizedTags.includes(tag)),
           ].slice(0, 5);
 
           localStorage.setItem(

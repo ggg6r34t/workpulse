@@ -1,0 +1,29 @@
+{
+  "name": "WorkPulse - Time Tracking & Productivity",
+  "short_name": "WorkPulse",
+  "description": "Professional time tracking and productivity application",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["productivity", "business", "utilities"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Start Timer",
+      "short_name": "Timer",
+      "description": "Quickly start a new time entry",
+      "url": "/?action=start",
+      "icons": [{ "src": "/favicon.ico", "sizes": "any" }]
+    }
+  ]
+}
+

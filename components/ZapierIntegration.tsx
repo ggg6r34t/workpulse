@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Zap, ArrowRight, Check, Info } from "lucide-react";
 import { useTimeTracker } from "@/app/contexts/TimeTrackerContext";
 import { toast } from "@/app/hooks/useToast";
+import { validateWebhookUrl, sanitizeString } from "@/lib/validation";
 
 const ZapierIntegration = () => {
   const [webhookUrl, setWebhookUrl] = useState<string>("");
@@ -30,7 +31,9 @@ const ZapierIntegration = () => {
   const handleTrigger = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!webhookUrl) {
+    const sanitizedUrl = sanitizeString(webhookUrl.trim(), 500);
+    
+    if (!sanitizedUrl) {
       toast({
         title: "Error",
         description: "Please enter your Zapier webhook URL",
@@ -39,28 +42,39 @@ const ZapierIntegration = () => {
       return;
     }
 
+    // Validate webhook URL
+    try {
+      validateWebhookUrl(sanitizedUrl);
+    } catch (error) {
+      toast({
+        title: "Invalid URL",
+        description: error instanceof Error ? error.message : "Please enter a valid webhook URL",
+        variant: "error",
+      });
+      return;
+    }
+
     setIsLoading(true);
-    console.log("Triggering Zapier webhook:", webhookUrl);
 
     try {
-      // Prepare data to send to Zapier
+      // Prepare data to send to Zapier (sanitize all user inputs)
       const data = {
         timestamp: new Date().toISOString(),
         triggered_from: window.location.origin,
         active_timer: activeEntry
           ? {
               id: activeEntry.id,
-              task: activeEntry.task,
-              client: activeEntry.client,
-              started_at: activeEntry.startTime,
+              task: sanitizeString(activeEntry.task, 200),
+              client: sanitizeString(activeEntry.client, 200),
+              started_at: activeEntry.startTime.toISOString(),
               is_paused: activeEntry.isPaused,
             }
           : null,
         latest_entry: latestEntry
           ? {
               id: latestEntry.id,
-              task: latestEntry.task,
-              client: latestEntry.client,
+              task: sanitizeString(latestEntry.task, 200),
+              client: sanitizeString(latestEntry.client, 200),
               duration_ms: latestEntry.endTime
                 ? latestEntry.endTime.getTime() -
                   latestEntry.startTime.getTime() -
@@ -71,29 +85,48 @@ const ZapierIntegration = () => {
         total_entries: timeEntries.length,
       };
 
-      await fetch(webhookUrl, {
+      // Use a timeout to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      const response = await fetch(sanitizedUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        mode: "no-cors", // Add this to handle CORS
+        mode: "cors",
         body: JSON.stringify(data),
+        signal: controller.signal,
       });
 
-      // Since we're using no-cors, we won't get a proper response status
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       toast({
         title: "Request Sent",
         description:
           "The request was sent to Zapier. Check your Zap's history to confirm.",
+        variant: "success",
       });
     } catch (error) {
-      console.error("Error triggering webhook:", error);
-      toast({
-        title: "Error",
-        description:
-          "Failed to trigger the Zapier webhook. Please check the URL and try again.",
-        variant: "error",
-      });
+      if (error instanceof Error && error.name === "AbortError") {
+        toast({
+          title: "Request Timeout",
+          description: "The request took too long. Please check your connection and try again.",
+          variant: "error",
+        });
+      } else {
+        console.error("Error triggering webhook:", error);
+        toast({
+          title: "Error",
+          description:
+            "Failed to trigger the Zapier webhook. Please check the URL and try again.",
+          variant: "error",
+        });
+      }
     } finally {
       setIsLoading(false);
     }

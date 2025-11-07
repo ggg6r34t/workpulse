@@ -36,11 +36,13 @@ export function useDebouncedCallback<T extends (...args: unknown[]) => unknown>(
   }, [callback]);
 
   const debouncedCallback = useCallback(
-    debounce((...args: Parameters<T>) => {
-      callbackRef.current(...args);
-    }, delay) as T,
+    (...args: unknown[]) => {
+      return debounce(() => {
+        callbackRef.current(...args);
+      }, delay)();
+    },
     [delay]
-  );
+  ) as T;
 
   return debouncedCallback;
 }
@@ -59,11 +61,13 @@ export function useThrottledCallback<T extends (...args: unknown[]) => unknown>(
   }, [callback]);
 
   const throttledCallback = useCallback(
-    throttle((...args: Parameters<T>) => {
-      callbackRef.current(...args);
-    }, limit) as T,
+    (...args: unknown[]) => {
+      return throttle(() => {
+        callbackRef.current(...args);
+      }, limit)();
+    },
     [limit]
-  );
+  ) as T;
 
   return throttledCallback;
 }
@@ -73,7 +77,10 @@ export function useThrottledCallback<T extends (...args: unknown[]) => unknown>(
  */
 export function usePerformanceMeasure(name: string) {
   useEffect(() => {
-    if (process.env.NODE_ENV === "development" && typeof performance !== "undefined") {
+    if (
+      process.env.NODE_ENV === "development" &&
+      typeof performance !== "undefined"
+    ) {
       const startMark = `${name}-render-start`;
       const endMark = `${name}-render-end`;
       const measureName = `${name}-render`;
@@ -91,4 +98,3 @@ export function usePerformanceMeasure(name: string) {
     }
   }, [name]);
 }
-

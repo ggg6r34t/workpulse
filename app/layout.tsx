@@ -127,10 +127,7 @@ export default function RootLayout({
                 <TimeTrackerProvider>
                   <ClientProviders />
                   <Navbar />
-                  <main
-                    className="w-full min-h-screen p-6 mx-auto pb-20 md:pb-6"
-                    role="main"
-                  >
+                  <main className="w-full min-h-screen" role="main">
                     {children}
                   </main>
                   <Footer />

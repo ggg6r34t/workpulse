@@ -7,9 +7,10 @@ import { Calendar, Keyboard } from "lucide-react";
 import NotificationButton from "../NotificationButton";
 import SettingsButton from "@/app/settings/components/SettingsButton";
 import ThemeToggle from "../ThemeToggle";
-import KeyboardShortcutsModal from "../KeyboardShortcutsModal";
 import { Button } from "@/components/ui/button";
-import { useKeyboardShortcutsModal } from "@/app/hooks/useKeyboardShortcutsModal";
+import KeyboardShortcutsModal, {
+  useKeyboardShortcutsModal,
+} from "../KeyboardShortcutsModal";
 
 const Navbar = () => {
   const { isOpen, setIsOpen } = useKeyboardShortcutsModal();

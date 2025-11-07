@@ -85,8 +85,8 @@ const KeyboardShortcuts = ({ shortcuts }: KeyboardShortcutsProps) => {
       </HoverCardTrigger>
       <HoverCardContent className="w-auto p-2 bg-white/90 backdrop-blur-sm border-border/40">
         <p className="text-xs">
-          Press <kbd className="px-1 bg-secondary/40 rounded">S</kbd> to start,{" "}
-          <kbd className="px-1 bg-secondary/40 rounded">P</kbd> to pause
+          Press <kbd className="px-1 bg-secondary/40 rounded">Space</kbd> to
+          start, <kbd className="px-1 bg-secondary/40 rounded">P</kbd> to pause
         </p>
       </HoverCardContent>
     </HoverCard>

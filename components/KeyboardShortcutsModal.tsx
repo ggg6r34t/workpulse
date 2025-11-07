@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -16,10 +16,54 @@ interface KeyboardShortcut {
   category?: string;
 }
 
+interface ShortcutAction {
+  action: () => void;
+  description: string;
+}
+
 interface KeyboardShortcutsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  shortcuts?: Record<string, { action: () => void; description: string }>;
+  shortcuts?: Record<string, ShortcutAction>;
+}
+
+// Custom hook for global keyboard shortcut
+export function useKeyboardShortcutsModal() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "?" && !e.ctrlKey && !e.metaKey && !e.altKey && !isOpen) {
+        const target = e.target as HTMLElement;
+        if (
+          target.tagName !== "INPUT" &&
+          target.tagName !== "TEXTAREA" &&
+          !target.isContentEditable
+        ) {
+          e.preventDefault();
+          setIsOpen(true);
+        }
+      }
+
+      // Close modal on Escape key
+      if (e.key === "Escape" && isOpen) {
+        e.preventDefault();
+        setIsOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
+
+  const handleOpenChange = useCallback((open: boolean) => {
+    setIsOpen(open);
+  }, []);
+
+  return {
+    isOpen,
+    setIsOpen: handleOpenChange,
+  };
 }
 
 const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
@@ -27,44 +71,50 @@ const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
   onOpenChange,
   shortcuts = {},
 }) => {
-  // Default shortcuts
-  const defaultShortcuts: KeyboardShortcut[] = [
-    { key: "Space", description: "Start/Stop timer", category: "Timer" },
-    { key: "P", description: "Pause/Resume timer", category: "Timer" },
-    { key: "Esc", description: "Stop timer", category: "Timer" },
-    { key: "S", description: "Open settings", category: "Navigation" },
-    { key: "E", description: "Export data", category: "Actions" },
-    { key: "?", description: "Show keyboard shortcuts", category: "General" },
-  ];
-
-  // Combine default and custom shortcuts
-  const allShortcuts: KeyboardShortcut[] = [
-    ...defaultShortcuts,
-    ...Object.entries(shortcuts).map(([key, value]) => ({
-      key: key.toUpperCase(),
-      description: value.description,
-      category: "Custom",
-    })),
-  ];
-
-  // Group shortcuts by category
-  const shortcutsByCategory = allShortcuts.reduce(
-    (acc, shortcut) => {
-      const category = shortcut.category || "General";
-      if (!acc[category]) {
-        acc[category] = [];
-      }
-      acc[category].push(shortcut);
-      return acc;
-    },
-    {} as Record<string, KeyboardShortcut[]>
+  // Memoize default shortcuts to prevent recreating on every render
+  const defaultShortcuts = useMemo(
+    (): KeyboardShortcut[] => [
+      { key: "Space", description: "Start timer", category: "Timer" },
+      { key: "P", description: "Pause/Resume timer", category: "Timer" },
+      { key: "Esc", description: "Stop timer", category: "Timer" },
+      { key: "?", description: "Show keyboard shortcuts", category: "General" },
+    ],
+    []
   );
 
-  // Escape key is handled by Dialog component natively
+  // Memoize combined shortcuts to prevent recalculation on every render
+  const allShortcuts = useMemo(
+    () => [
+      ...defaultShortcuts,
+      ...Object.entries(shortcuts).map(([key, value]) => ({
+        key: key.toUpperCase(),
+        description: value.description,
+        category: "Custom" as const,
+      })),
+    ],
+    [defaultShortcuts, shortcuts]
+  );
+
+  // Memoize categorized shortcuts
+  const shortcutsByCategory = useMemo(
+    () =>
+      allShortcuts.reduce((acc, shortcut) => {
+        const category = shortcut.category || "General";
+        if (!acc[category]) {
+          acc[category] = [];
+        }
+        acc[category].push(shortcut);
+        return acc;
+      }, {} as Record<string, KeyboardShortcut[]>),
+    [allShortcuts]
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent
+        className="w-full max-h-[80vh] mx-auto overflow-y-auto"
+        onEscapeKeyDown={(e) => e.preventDefault()} // Let our hook handle Escape
+      >
         <DialogHeader>
           <div className="flex items-center gap-2">
             <Keyboard className="h-5 w-5 text-primary" />
@@ -82,15 +132,15 @@ const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
                 {category}
               </h3>
               <div className="grid gap-3">
-                {items.map((shortcut, index) => (
+                {items.map((shortcut) => (
                   <div
-                    key={`${category}-${index}`}
+                    key={`${category}-${shortcut.key}`}
                     className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
                   >
                     <span className="text-sm text-muted-foreground">
                       {shortcut.description}
                     </span>
-                    <kbd className="px-2 py-1 text-xs font-semibold text-foreground bg-background border border-border rounded shadow-sm">
+                    <kbd className="px-2 py-1 text-xs font-semibold text-foreground bg-background border border-border rounded shadow-sm min-w-[60px] text-center">
                       {shortcut.key}
                     </kbd>
                   </div>
@@ -102,8 +152,15 @@ const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
 
         <div className="pt-4 border-t text-xs text-muted-foreground">
           <p>
-            Press <kbd className="px-1.5 py-0.5 text-xs font-semibold bg-muted border border-border rounded">?</kbd>{" "}
-            anytime to open this help dialog
+            Press{" "}
+            <kbd className="px-1.5 py-0.5 text-xs font-semibold bg-muted border border-border rounded">
+              ?
+            </kbd>{" "}
+            anytime to open this help dialog, or{" "}
+            <kbd className="px-1.5 py-0.5 text-xs font-semibold bg-muted border border-border rounded">
+              Esc
+            </kbd>{" "}
+            to close
           </p>
         </div>
       </DialogContent>
@@ -112,4 +169,3 @@ const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
 };
 
 export default KeyboardShortcutsModal;
-

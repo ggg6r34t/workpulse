@@ -34,8 +34,14 @@ export const useKeyboardShortcuts = (
       if (event.shiftKey) keyCombo += "shift+";
       if (event.metaKey) keyCombo += "meta+";
 
-      // Add the actual key pressed
-      keyCombo += event.key.toLowerCase();
+      // Handle space key specially
+      if (event.key === " ") {
+        keyCombo += "space";
+        event.preventDefault(); // Prevent default scrolling behavior
+      } else {
+        // Add the actual key pressed
+        keyCombo += event.key.toLowerCase();
+      }
 
       // Check if the key combination exists in our shortcuts
       const shortcut = shortcuts[keyCombo];

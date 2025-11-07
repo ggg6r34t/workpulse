@@ -29,15 +29,15 @@ const TimerControls = () => {
 
   // Defined keyboard shortcuts
   const shortcuts = {
-    s: {
+    Space: {
       action: () => !isActive && startTimer(defaultClient, defaultTask),
       description: "Start timer",
     },
-    p: {
+    P: {
       action: () => isActive && (isPaused ? resumeTimer() : pauseTimer()),
       description: isPaused ? "Resume timer" : "Pause timer",
     },
-    escape: {
+    Esc: {
       action: () => isActive && stopTimer(),
       description: "Stop timer",
     },

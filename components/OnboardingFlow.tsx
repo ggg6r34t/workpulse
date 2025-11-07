@@ -149,7 +149,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent closeButton={false} className="max-w-md">
+      <DialogContent closeButton={false}>
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle>{steps[currentStep]?.title}</DialogTitle>
